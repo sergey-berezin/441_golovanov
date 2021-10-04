@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using YOLOv4MLNet.DataStructures;
+using System.Threading;
+using System.Threading.Tasks;
 using static Microsoft.ML.Transforms.Image.ImageResizingEstimator;
 
 namespace YOLOv4MLNet
@@ -22,7 +24,9 @@ namespace YOLOv4MLNet
 
         static readonly string[] classesNames = new string[] { "person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush" };
 
-        static void Main()
+        private static SemaphoreSlim sm;
+
+        static void Main1()
         {
             Directory.CreateDirectory(imageOutputFolder);
             MLContext mlContext = new MLContext();
@@ -95,6 +99,58 @@ namespace YOLOv4MLNet
             }
             sw.Stop();
             Console.WriteLine($"Done in {sw.ElapsedMilliseconds}ms.");
+        }
+
+        static void Main()
+        {
+            sm = new SemaphoreSlim(1);
+            int x = 0;
+
+            /*var tasks = new Task<int>[10];
+
+            for(int i = 0; i < 10; i++)
+            {
+                int k = i;
+                tasks[i] = Task.Factory.StartNew(() => { Console.WriteLine(k.ToString() + " task"); return k; })
+                    .ContinueWith(prevt => {
+                        sm.Wait();
+                        Interlocked.Increment(ref x);
+                        Console.WriteLine(x.ToString());
+                        sm.Release();
+                        return prevt.Result;
+                    });
+            }
+
+            var t3 = Task.WhenAll<int>(tasks).ContinueWith(comb => { Console.WriteLine("End"); });*/
+
+            //Console.WriteLine("End");
+
+            var tasks = new Task<int>[3];
+
+            for(int i = 0; i < 3; i++)
+            {
+                int k = i;
+                tasks[i] = Task<int>.Factory.StartNew(() => {
+                    for (int i = 0; i < 20; i++)
+                        Console.Write(".");
+                    Console.Write(k.ToString());
+                    return 1000;
+                }).ContinueWith(prevTask => {
+                    sm.Wait();
+                    Interlocked.Increment(ref x);
+                    Console.WriteLine(x.ToString());
+                    sm.Release();
+                    return prevTask.Result * 2;
+                });
+            }
+
+            var task3 = Task.WhenAll<int>(tasks).ContinueWith(combined => {
+                for (int i = 0; i < 1000; i++)
+                    Console.Write("?");
+                return combined.Result.Length;
+            });
+
+            Console.WriteLine($"{task3.Result}");
         }
     }
 }
