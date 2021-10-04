@@ -16,7 +16,7 @@ namespace YOLOv4MLNet
     {
         // model is available here:
         // https://github.com/onnx/models/tree/master/vision/object_detection_segmentation/yolov4
-        const string modelPath = @"C:\Users\Nikita\Projects\Models\yolov4.onnx";
+        const string modelPath = @"C:\Users\Nik\Projects\Models\yolov4.onnx";
 
         const string imageFolder = @"Assets\Images";
 
@@ -101,30 +101,12 @@ namespace YOLOv4MLNet
             Console.WriteLine($"Done in {sw.ElapsedMilliseconds}ms.");
         }
 
-        static void Main()
+        static void Main2()
         {
             sm = new SemaphoreSlim(1);
             int x = 0;
 
-            /*var tasks = new Task<int>[10];
-
-            for(int i = 0; i < 10; i++)
-            {
-                int k = i;
-                tasks[i] = Task.Factory.StartNew(() => { Console.WriteLine(k.ToString() + " task"); return k; })
-                    .ContinueWith(prevt => {
-                        sm.Wait();
-                        Interlocked.Increment(ref x);
-                        Console.WriteLine(x.ToString());
-                        sm.Release();
-                        return prevt.Result;
-                    });
-            }
-
-            var t3 = Task.WhenAll<int>(tasks).ContinueWith(comb => { Console.WriteLine("End"); });*/
-
-            //Console.WriteLine("End");
-
+            
             var tasks = new Task<int>[3];
 
             for(int i = 0; i < 3; i++)
@@ -151,6 +133,29 @@ namespace YOLOv4MLNet
             });
 
             Console.WriteLine($"{task3.Result}");
+        }
+
+        static void Main()
+        {
+            ParMLcs mlo = new ParMLcs();
+            Console.WriteLine("Start");
+
+            foreach (string imageName in new string[] { "kite.jpg", "dog_cat.jpg", "cars road.jpg", "ski.jpg", "ski2.jpg" })
+            {
+                using (var bitmap = new Bitmap(Image.FromFile(Path.Combine(imageFolder, imageName))))
+                {
+                    // predict
+                    Console.WriteLine(imageName);
+                    var results = mlo.processImage(bitmap);
+
+                    
+                    //bitmap.Save(Path.Combine(imageOutputFolder, Path.ChangeExtension(imageName, "_processed" + Path.GetExtension(imageName))));
+                    foreach(var item in results)
+                    {
+                        Console.WriteLine(item.ToString());
+                    }
+                }
+            }
         }
     }
 }
