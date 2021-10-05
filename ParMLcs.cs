@@ -16,9 +16,9 @@ using static Microsoft.ML.Transforms.Image.ImageResizingEstimator;
 
 namespace YOLOv4MLNet
 {
-    class ParMLcs
+    public class ParMLcs
     {
-        const string modelPath = @"C:\Users\Nik\Projects\Models\yolov4.onnx";
+        const string modelPath = @"C:\Users\Nikita\Projects\Models\yolov4.onnx";
 
         //const string imageFolder = @"Assets\Images";
 
@@ -75,5 +75,49 @@ namespace YOLOv4MLNet
         }
 
 
+
+        public List<imageRes> processFolder(string folder)
+        {
+            var jpegs = Directory.EnumerateFiles(folder, "*.jpg");
+            int length = 0;
+            foreach (var jpeg in jpegs)
+                length++;
+
+            sm = new SemaphoreSlim(1);
+            int x = 0;
+            int i = 0;
+
+            var tasks = new Task<imageRes>[length];
+
+            foreach (var jpeg in jpegs)
+            {
+                var ajpeg = jpeg;
+                tasks[i] = Task<imageRes>.Factory.StartNew(() =>
+                {
+                    var bitmap = new Bitmap(Image.FromFile(ajpeg));
+                    var res = processImage(bitmap);
+                    sm.Wait();
+                    Interlocked.Increment(ref x);
+                    float procent = (float)x / (float)length * 100;
+                    Console.WriteLine(procent.ToString());
+                    sm.Release();
+                    return new imageRes(ajpeg, res);
+                });
+                i++;
+            }
+
+            var task3 = Task.WhenAll<imageRes>(tasks).ContinueWith(combined => {
+                var res = new List<imageRes>();
+                foreach(var item in combined.Result)
+                {
+                    res.Add(item);
+                }
+                return res;
+            });
+
+            task3.Wait();
+
+           return task3.Result;
+        }
     }
 }

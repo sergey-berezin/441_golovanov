@@ -4,7 +4,7 @@ using System.Text;
 
 namespace YOLOv4MLNet
 {
-    class resClass
+    public class resClass
     {
         string Label;
         float[] Box;
@@ -47,11 +47,11 @@ namespace YOLOv4MLNet
 
         public override string ToString()
         {
-            return Label + "\n" + Box[0].ToString() + "\n" + Confidence.ToString();
+            return Label + "\n" + Box[0].ToString() + "\n" + Box[1].ToString() + "\n" + Box[2].ToString() + "\n" + Box[3].ToString() + "\n" + Confidence.ToString();
         }
     }
 
-    class imageRes
+    public class imageRes
     {
         string ImgName;
         List<resClass> Results;
@@ -76,6 +76,14 @@ namespace YOLOv4MLNet
             {
                 return Results;
             }
+        }
+
+        public override string ToString()
+        {
+            string res = ImgName + "\n";
+            foreach(var item in Results)
+                res = res + item.ToString() + "\n";
+            return res;
         }
     }
 }

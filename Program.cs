@@ -24,8 +24,6 @@ namespace YOLOv4MLNet
 
         static readonly string[] classesNames = new string[] { "person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush" };
 
-        private static SemaphoreSlim sm;
-
         static void Main1()
         {
             Directory.CreateDirectory(imageOutputFolder);
@@ -101,60 +99,19 @@ namespace YOLOv4MLNet
             Console.WriteLine($"Done in {sw.ElapsedMilliseconds}ms.");
         }
 
-        static void Main2()
-        {
-            sm = new SemaphoreSlim(1);
-            int x = 0;
-
-            
-            var tasks = new Task<int>[3];
-
-            for(int i = 0; i < 3; i++)
-            {
-                int k = i;
-                tasks[i] = Task<int>.Factory.StartNew(() => {
-                    for (int i = 0; i < 20; i++)
-                        Console.Write(".");
-                    Console.Write(k.ToString());
-                    return 1000;
-                }).ContinueWith(prevTask => {
-                    sm.Wait();
-                    Interlocked.Increment(ref x);
-                    Console.WriteLine(x.ToString());
-                    sm.Release();
-                    return prevTask.Result * 2;
-                });
-            }
-
-            var task3 = Task.WhenAll<int>(tasks).ContinueWith(combined => {
-                for (int i = 0; i < 1000; i++)
-                    Console.Write("?");
-                return combined.Result.Length;
-            });
-
-            Console.WriteLine($"{task3.Result}");
-        }
 
         static void Main()
         {
             ParMLcs mlo = new ParMLcs();
             Console.WriteLine("Start");
 
-            foreach (string imageName in new string[] { "kite.jpg", "dog_cat.jpg", "cars road.jpg", "ski.jpg", "ski2.jpg" })
-            {
-                using (var bitmap = new Bitmap(Image.FromFile(Path.Combine(imageFolder, imageName))))
-                {
-                    // predict
-                    Console.WriteLine(imageName);
-                    var results = mlo.processImage(bitmap);
+            var jpegs = Directory.EnumerateFiles(imageFolder, "*.jpg");
 
-                    
-                    //bitmap.Save(Path.Combine(imageOutputFolder, Path.ChangeExtension(imageName, "_processed" + Path.GetExtension(imageName))));
-                    foreach(var item in results)
-                    {
-                        Console.WriteLine(item.ToString());
-                    }
-                }
+            var res = mlo.processFolder(imageFolder);
+
+            foreach (var item in res)
+            {
+                Console.WriteLine(item.ToString());
             }
         }
     }
