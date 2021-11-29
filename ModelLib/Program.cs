@@ -8,6 +8,7 @@ using YOLOv4MLNet.DataStructures;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.ML.Transforms.Image.ImageResizingEstimator;
+using System.Collections.ObjectModel;
 
 namespace YOLOv4MLNet
 {
@@ -100,16 +101,21 @@ namespace YOLOv4MLNet
         }
 
 
-        static void Main()
+        static async Task Main()
         {
             ParMLcs mlo = new ParMLcs();
             Console.WriteLine("Start");
 
             var jpegs = Directory.EnumerateFiles(imageFolder, "*.jpg");
 
-            var res = mlo.processFolder(imageFolder);
+            var coll = new ObservableCollection<imageRes>();
+            var cancelTS = new CancellationTokenSource();
+            var cancelT = cancelTS.Token;
 
-            foreach (var item in res)
+
+            await mlo.ProcessFolder(imageFolder, coll, cancelT);
+
+            foreach (var item in coll)
             {
                 Console.WriteLine(item.ToString());
             }

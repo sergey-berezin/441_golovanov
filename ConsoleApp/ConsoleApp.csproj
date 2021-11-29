@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\441_golovanov\YOLOv4MLNet.csproj" />
+    <ProjectReference Include="..\ModelLib\YOLOv4MLNet.csproj" />
   </ItemGroup>
 
 </Project>

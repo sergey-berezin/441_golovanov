@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.ML;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -28,8 +29,7 @@ namespace YOLOv4MLNet
 
         private static SemaphoreSlim sm;
 
-
-        public List<resClass> processImage(Bitmap image)
+        public List<resClass> ProcessImage(Bitmap image)
         {
             MLContext mlContext = new MLContext();
 
@@ -59,7 +59,6 @@ namespace YOLOv4MLNet
             var model = pipeline.Fit(mlContext.Data.LoadFromEnumerable(new List<YoloV4BitmapData>()));
 
             var predictionEngine = mlContext.Model.CreatePredictionEngine<YoloV4BitmapData, YoloV4Prediction>(model);
-
             var predict = predictionEngine.Predict(new YoloV4BitmapData() { Image = image });
             var results = predict.GetResults(classesNames, 0.3f, 0.7f);
 
@@ -76,7 +75,7 @@ namespace YOLOv4MLNet
 
 
 
-        public List<imageRes> processFolder(string folder)
+        public async Task ProcessFolder(string folder, ObservableCollection<imageRes> result, CancellationToken ct)
         {
             var jpegs = Directory.EnumerateFiles(folder, "*.jpg");
             int length = 0;
@@ -95,7 +94,7 @@ namespace YOLOv4MLNet
                 tasks[i] = Task<imageRes>.Factory.StartNew(() =>
                 {
                     var bitmap = new Bitmap(Image.FromFile(ajpeg));
-                    var res = processImage(bitmap);
+                    var res = ProcessImage(bitmap);
                     sm.Wait();
                     Interlocked.Increment(ref x);
                     float procent = (float)x / (float)length * 100;
@@ -106,18 +105,13 @@ namespace YOLOv4MLNet
                 i++;
             }
 
-            var task3 = Task.WhenAll<imageRes>(tasks).ContinueWith(combined => {
-                var res = new List<imageRes>();
+            await Task.WhenAll<imageRes>(tasks).ContinueWith(combined => {
                 foreach(var item in combined.Result)
                 {
-                    res.Add(item);
+                    result.Add(item);
                 }
-                return res;
             });
 
-            task3.Wait();
-
-           return task3.Result;
         }
     }
 }
