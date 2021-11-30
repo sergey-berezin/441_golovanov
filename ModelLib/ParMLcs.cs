@@ -96,6 +96,7 @@ namespace YOLOv4MLNet
                     var bitmap = new Bitmap(Image.FromFile(ajpeg));
                     var res = ProcessImage(bitmap);
                     sm.Wait();
+                    result.Add(new imageRes(ajpeg, res));
                     Interlocked.Increment(ref x);
                     float procent = (float)x / (float)length * 100;
                     Console.WriteLine(procent.ToString());
@@ -106,10 +107,7 @@ namespace YOLOv4MLNet
             }
 
             await Task.WhenAll<imageRes>(tasks).ContinueWith(combined => {
-                foreach(var item in combined.Result)
-                {
-                    result.Add(item);
-                }
+                
             });
 
         }
