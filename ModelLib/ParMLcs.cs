@@ -86,12 +86,12 @@ namespace YOLOv4MLNet
             int x = 0;
             int i = 0;
 
-            var tasks = new Task<imageRes>[length];
+            var tasks = new Task[length];
 
             foreach (var jpeg in jpegs)
             {
                 var ajpeg = jpeg;
-                tasks[i] = Task<imageRes>.Factory.StartNew(() =>
+                tasks[i] = Task.Factory.StartNew(() =>
                 {
                     var bitmap = new Bitmap(Image.FromFile(ajpeg));
                     var res = ProcessImage(bitmap);
@@ -101,14 +101,11 @@ namespace YOLOv4MLNet
                     float procent = (float)x / (float)length * 100;
                     Console.WriteLine(procent.ToString());
                     sm.Release();
-                    return new imageRes(ajpeg, res);
                 });
                 i++;
             }
 
-            await Task.WhenAll<imageRes>(tasks).ContinueWith(combined => {
-                
-            });
+            await Task.WhenAll(tasks);
 
         }
     }

@@ -71,6 +71,13 @@ namespace WpfApp2
                 CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
 
+        public void Clear()
+        {
+            collection = new List<Element>();
+            if (CollectionChanged != null)
+                CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
+
         public IEnumerator<string> GetEnumerator()
         {
 

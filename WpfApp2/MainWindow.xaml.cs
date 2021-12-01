@@ -60,11 +60,13 @@ namespace WpfApp2
         private async void btnRun_Click(object sender, RoutedEventArgs e)
         {
             button1.IsEnabled = false;
+
+            test.Clear();
             var imageOutputFolder = textBlock.Text + "\\Output";
             Directory.CreateDirectory(imageOutputFolder);
             var coll = new ObservableCollection<imageRes>();
             coll.CollectionChanged += handler;
-
+            
             ts = new CancellationTokenSource();
             token = ts.Token;
 
@@ -74,15 +76,10 @@ namespace WpfApp2
 
             foreach (var item in coll)
             {
-
-                int index = test.collection.FindIndex(x => x.Name == item.imgName);
-
-                if (index != -1)
-                {
-                    var file_name = System.IO.Path.GetFileName(item.imgName);
-                    var res_file_name = System.IO.Path.Combine(imageOutputFolder, file_name);
-                    test.collection[index].Path = res_file_name;
-                }
+                 var file_name = System.IO.Path.GetFileName(item.imgName);
+                 var res_file_name = System.IO.Path.Combine(imageOutputFolder, file_name);
+                 test.Add(res_file_name);
+                
             }
 
             button1.IsEnabled = true;
@@ -92,12 +89,8 @@ namespace WpfApp2
         {
             var coll = (ObservableCollection<imageRes>)sender;
 
-            foreach(var item in coll)
+            foreach(var item in e.NewItems.Cast<imageRes>())
             {
-                int index = test.collection.FindIndex(x => x.Name == item.imgName);
-
-                if (index != -1)
-                {
                     var bitmap = new Bitmap(System.Drawing.Image.FromFile(item.imgName));
 
                     using (var g = Graphics.FromImage(bitmap))
@@ -121,12 +114,13 @@ namespace WpfApp2
                         var imageOutputFolder = System.IO.Path.GetDirectoryName(item.imgName) + "\\Output";
                         var file_name = System.IO.Path.GetFileName(item.imgName);
                         var res_file_name = System.IO.Path.Combine(imageOutputFolder, file_name);
+
                         sm.Wait();
                         bitmap.Save(res_file_name);
                         //test.collection[index].Path = res_file_name;
                         sm.Release();
                     }
-                }
+                
             }
         }
 
