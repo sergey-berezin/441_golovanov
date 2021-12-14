@@ -21,6 +21,17 @@ namespace YOLOv4MLNet
             Confidence = conf;
         }
 
+        public resClass()
+        {
+            Label = "";
+            Box = new float[4];
+            Box[0] = 0;
+            Box[1] = 0;
+            Box[2] = 0;
+            Box[3] = 0;
+            Confidence = 0;
+        }
+
         public string label
         {
             get
