@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Text;
+using System.Drawing;
+using System.Windows.Media.Imaging;
+using System.IO;
 
 namespace WpfApp2
 {
@@ -11,6 +14,7 @@ namespace WpfApp2
     {
         private string name;
         private string path;
+        public Bitmap bitmap;
 
         public string Name
         {
@@ -43,7 +47,7 @@ namespace WpfApp2
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
-    class Elements : IEnumerable<string>, INotifyCollectionChanged
+    class Elements : IEnumerable<BitmapImage>, INotifyCollectionChanged
     {
         public List<Element> collection;
 
@@ -65,8 +69,17 @@ namespace WpfApp2
             var added = new Element();
             added.Name = filename;
             added.Path = filename;
+            added.bitmap = new Bitmap(System.Drawing.Image.FromFile(filename));
             added.PropertyChanged += PropChanged;
             collection.Add(added);
+            if (CollectionChanged != null)
+                CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
+
+        public void AddEl(Element el)
+        {
+            el.PropertyChanged += PropChanged;
+            collection.Add(el);
             if (CollectionChanged != null)
                 CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
@@ -78,23 +91,35 @@ namespace WpfApp2
                 CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
 
-        public IEnumerator<string> GetEnumerator()
+        public BitmapImage Convert(Bitmap src)
+        {
+            MemoryStream ms = new MemoryStream();
+            ((System.Drawing.Bitmap)src).Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
+            BitmapImage image = new BitmapImage();
+            image.BeginInit();
+            ms.Seek(0, SeekOrigin.Begin);
+            image.StreamSource = ms;
+            image.EndInit();
+            return image;
+        }
+
+        public IEnumerator<BitmapImage> GetEnumerator()
         {
 
-            var res = new List<string>();
+            var res = new List<BitmapImage>();
             foreach (var item in collection)
             {
-                res.Add(item.Path);
+                res.Add(Convert(item.bitmap));
             }
-            return ((IEnumerable<string>)res).GetEnumerator();
+            return res.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            var res = new List<string>();
+            var res = new List<BitmapImage>();
             foreach(var item in collection)
             {
-                res.Add(item.Path);
+                res.Add(Convert(item.bitmap));
             }
             return ((IEnumerable)res).GetEnumerator();
         }

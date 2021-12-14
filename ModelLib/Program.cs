@@ -68,7 +68,7 @@ namespace YOLOv4MLNet
             sw.Start();
             foreach (string imageName in new string[] { "kite.jpg", "dog_cat.jpg", "cars road.jpg", "ski.jpg", "ski2.jpg" })
             {
-                using (var bitmap = new Bitmap(Image.FromFile(Path.Combine(imageFolder, imageName))))
+                using (var bitmap = new Bitmap(System.Drawing.Image.FromFile(Path.Combine(imageFolder, imageName))))
                 {
                     // predict
                     var predict = predictionEngine.Predict(new YoloV4BitmapData() { Image = bitmap });

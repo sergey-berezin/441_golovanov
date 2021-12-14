@@ -21,6 +21,7 @@ using System.Threading;
 using System.Collections.Specialized;
 using System.Drawing;
 using System.Windows.Threading;
+using System.Drawing.Imaging;
 
 namespace WpfApp2
 {
@@ -33,10 +34,25 @@ namespace WpfApp2
         private static CancellationToken token;
         private static CancellationTokenSource ts;
         private static SemaphoreSlim sm = new SemaphoreSlim(1);
+        private static ImageDB db;
 
         public MainWindow()
         {
             InitializeComponent();
+            db = new ImageDB();
+            Console.WriteLine("Start");
+            foreach(var item in db.images) {
+                db.Entry(item).Reference(x => x.BLOB).Load();
+
+                Element el = new Element();
+                el.Name = item.ImageId.ToString();
+                el.Path = item.ImageId.ToString();
+                MemoryStream blb = new MemoryStream(item.BLOB.Img);
+                var btmp1 = new Bitmap(System.Drawing.Image.FromStream(blb));
+                el.bitmap = btmp1;
+                test.AddEl(el);
+                Console.WriteLine("Add image");
+            }
             DataContext = test;
         }
 
@@ -55,6 +71,16 @@ namespace WpfApp2
                     test.Add(jpeg);
                 }
             }
+        }
+
+        static public int Hash(string x)
+        {
+            int res = 0;
+            foreach (var k in x)
+            {
+                res = (res + (int)k) % 3688765;
+            }
+            return 0;
         }
 
         private async void btnRun_Click(object sender, RoutedEventArgs e)
@@ -78,8 +104,59 @@ namespace WpfApp2
             {
                  var file_name = System.IO.Path.GetFileName(item.imgName);
                  var res_file_name = System.IO.Path.Combine(imageOutputFolder, file_name);
-                 test.Add(res_file_name);
-                
+                var bitmap = new Bitmap(System.Drawing.Image.FromFile(res_file_name));
+                MemoryStream ms = new MemoryStream();
+                bitmap.Save(ms, ImageFormat.Jpeg);
+                byte[] blob = ms.ToArray();
+                //test.Add(res_file_name);
+
+                var hash = Hash(Convert.ToBase64String(blob));
+
+                bool add = true;
+
+                foreach (var img in db.images)
+                {
+                    if (hash == img.ImageHash)
+                    {
+                        db.Entry(img).Reference(x => x.BLOB).Load();
+                        var res = Convert.ToBase64String(img.BLOB.Img) == Convert.ToBase64String(blob);
+                        if (res)
+                        {
+                            add = false;
+
+                        }
+                    }
+                }
+
+                if (add)
+                {
+                    var imageblb = new ImageBlob { Img = blob };
+                    var image = new Image { ImageHash = hash, BLOB = imageblb };
+                    image.boxes = new List<Box>();
+
+                    foreach(var box in item.results)
+                    {
+                        image.boxes.Add(new Box() { Label = item.imgName, Confidence = box.confidence, x1 = box.box[0],
+                            x2 = box.box[1], x3 = box.box[2], x4 = box.box[3]});
+                    }
+
+                    //db.Add(imageblb);
+                    db.Add(image);
+                    db.SaveChanges();
+                }
+            }
+
+            foreach (var item in db.images)
+            {
+                db.Entry(item).Reference(x => x.BLOB).Load();
+
+                Element el = new Element();
+                el.Name = item.ImageId.ToString();
+                el.Path = item.ImageId.ToString();
+                MemoryStream blb = new MemoryStream(item.BLOB.Img);
+                var btmp1 = new Bitmap(System.Drawing.Image.FromStream(blb));
+                el.bitmap = btmp1;
+                test.AddEl(el);
             }
 
             button1.IsEnabled = true;
